@@ -27,6 +27,7 @@ import androidx.preference.PreferenceManager;
 import org.lineageos.device.settings.Constants;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -50,6 +51,7 @@ public class GameBarFpsMeter {
     private final WindowManager mWindowManager;
     private final SharedPreferences mPrefs;
     private float mCurrentFps = 0f;
+    private String mFpsNode = Constants.NODE_MEASURED_FPS;
     private TaskFpsCallback mTaskFpsCallback;
     private boolean mCallbackRegistered = false;
     private int mCurrentTaskId = -1;
@@ -137,7 +139,7 @@ public class GameBarFpsMeter {
      * "label: N" line, matching FPSInfoService. Keeps the last value on a bad read.
      */
     private float readLegacyFps() {
-        try (BufferedReader br = new BufferedReader(new FileReader(Constants.NODE_MEASURED_FPS))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(mFpsNode))) {
             String line = br.readLine();
             if (line != null) {
                 String token = line.trim();
@@ -149,6 +151,12 @@ public class GameBarFpsMeter {
                     mCurrentFps = fps;
                 }
                 return mCurrentFps > 0 ? mCurrentFps : -1f;
+            }
+        } catch (FileNotFoundException e) {
+            // sm8550/sm8650 kernels name the CRTC "sde-crtc-0": switch once
+            if (!Constants.NODE_MEASURED_FPS_SM8550.equals(mFpsNode)) {
+                mFpsNode = Constants.NODE_MEASURED_FPS_SM8550;
+                return readLegacyFps();
             }
         } catch (IOException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
         }

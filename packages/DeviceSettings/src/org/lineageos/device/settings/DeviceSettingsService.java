@@ -13,9 +13,11 @@ package org.lineageos.device.settings;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -30,6 +32,7 @@ import org.lineageos.device.settings.bypasschrg.BypassChargingManager;
 import org.lineageos.device.settings.display.DisplayModeController;
 import org.lineageos.device.settings.display.HbmController;
 import org.lineageos.device.settings.display.PwmController;
+import org.lineageos.device.settings.display.PwmTile;
 import org.lineageos.device.settings.display.SunlightBoostController;
 import org.lineageos.device.settings.gamebar.GameBar;
 import org.lineageos.device.settings.gamebar.GameBarMonitorService;
@@ -111,6 +114,16 @@ public class DeviceSettingsService extends Service {
     private void initializePwm() {
         if (Constants.DEBUG) Log.i(TAG, "Initializing PWM");
         try {
+            if (!PwmController.isSupported()) {
+                // No one-pulse PWM on this panel (salami): the settings page drops
+                // its switch, and its Quick Settings tile goes too
+                getPackageManager().setComponentEnabledSetting(
+                        new ComponentName(this, PwmTile.class),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP);
+                if (Constants.DEBUG) Log.i(TAG, "PWM not supported, tile disabled");
+                return;
+            }
             PwmController.getInstance(this).restorePwmSetting();
             if (Constants.DEBUG) Log.i(TAG, "PWM initialized");
         } catch (Exception e) {

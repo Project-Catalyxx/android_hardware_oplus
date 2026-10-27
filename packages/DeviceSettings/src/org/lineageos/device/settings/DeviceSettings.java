@@ -88,7 +88,11 @@ public class DeviceSettings extends SettingsBasePreferenceFragment
         mDisplayModeController = DisplayModeController.getInstance(getContext());
 
         mOnePulsePWMSwitch = (SwitchPreferenceCompat) findPreference(Constants.KEY_ONEPULSE_PWM);
-        if (FileUtils.isFileWritable(Constants.NODE_ONEPULSE_PWM)) {
+        if (!PwmController.isSupported()) {
+            // The panel has no one-pulse PWM (salami): drop the switch
+            mOnePulsePWMSwitch.getParent().removePreference(mOnePulsePWMSwitch);
+            mOnePulsePWMSwitch = null;
+        } else if (FileUtils.isFileWritable(Constants.NODE_ONEPULSE_PWM)) {
             mOnePulsePWMSwitch.setEnabled(true);
             mOnePulsePWMSwitch.setChecked(mPwmController.isPwmEnabled());
             mOnePulsePWMSwitch.setOnPreferenceChangeListener(this);
@@ -140,7 +144,8 @@ public class DeviceSettings extends SettingsBasePreferenceFragment
      * - PWM toggle is always enabled (it can override HBM)
      */
     private void syncHbmPwmState() {
-        if (mOnePulsePWMSwitch == null || mHbmSwitch == null) {
+        // mOnePulsePWMSwitch is null on panels without one-pulse PWM
+        if (mHbmSwitch == null) {
             return;
         }
 
@@ -157,14 +162,18 @@ public class DeviceSettings extends SettingsBasePreferenceFragment
         }
 
         // Update checkbox states
-        mOnePulsePWMSwitch.setChecked(pwmEnabled);
+        if (mOnePulsePWMSwitch != null) {
+            mOnePulsePWMSwitch.setChecked(pwmEnabled);
+        }
         mHbmSwitch.setChecked(hbmEnabled);
 
         // HBM cannot be enabled if PWM is enabled
         mHbmSwitch.setEnabled(!pwmEnabled && FileUtils.isFileWritable(Constants.NODE_HBM));
 
         // PWM can ALWAYS be toggled (it has priority and will auto-disable HBM)
-        mOnePulsePWMSwitch.setEnabled(FileUtils.isFileWritable(Constants.NODE_ONEPULSE_PWM));
+        if (mOnePulsePWMSwitch != null) {
+            mOnePulsePWMSwitch.setEnabled(FileUtils.isFileWritable(Constants.NODE_ONEPULSE_PWM));
+        }
     }
 
     private void initNotificationSliderPreference() {

@@ -16,6 +16,7 @@ import org.lineageos.device.settings.utils.FileUtils;
 public class PwmController {
     private static final String TAG = "PwmController";
     private static PwmController sInstance;
+    private static Boolean sSupported;
     private final Context mContext;
     private final SharedPreferences mSharedPrefs;
 
@@ -31,7 +32,23 @@ public class PwmController {
         return sInstance;
     }
 
+    /**
+     * Whether the panel has one-pulse PWM. The kernel only turns it on for panels
+     * that have it (none of salami's); on the others the node is still there but
+     * every read and write of it fails. So a readable node means the feature
+     * works, and that can't change until a reboot.
+     */
+    public static synchronized boolean isSupported() {
+        if (sSupported == null) {
+            sSupported = FileUtils.readLineTrimmed(Constants.NODE_ONEPULSE_PWM) != null;
+        }
+        return sSupported;
+    }
+
     public boolean isPwmEnabled() {
+        if (!isSupported()) {
+            return false;
+        }
         // The kernel state resets on reboot, so the node is the source of truth;
         // the preference is only a fallback while the node is unreadable
         String value = FileUtils.readLineTrimmed(Constants.NODE_ONEPULSE_PWM);
@@ -58,6 +75,10 @@ public class PwmController {
     }
 
     public boolean enablePwm() {
+        if (!isSupported()) {
+            Log.w(TAG, "The panel has no one-pulse PWM");
+            return false;
+        }
         if (!FileUtils.isFileWritable(Constants.NODE_ONEPULSE_PWM)) {
             Log.w(TAG, "PWM node is not writable");
             return false;

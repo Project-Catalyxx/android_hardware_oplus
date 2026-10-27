@@ -15,6 +15,10 @@ android_app {
     privileged: true,
     init_rc: ["init.device.settings.rc"],
 
+    // Its KeyHandler takes the alert slider over from the KeyHandler app here,
+    // which sm8550-common still adds to PRODUCT_PACKAGES
+    overrides: ["KeyHandler"],
+
     static_libs: [
         "SettingsLib",
         "org.lineageos.platform.internal",
