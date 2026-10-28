@@ -44,6 +44,13 @@ class Vibrator : public BnVibrator {
     ndk::ScopedAStatus getSupportedBraking(std::vector<Braking>* supported) override;
     ndk::ScopedAStatus composePwle(const std::vector<PrimitivePwle>& composite,
                                    const std::shared_ptr<IVibratorCallback>& callback) override;
+
+  private:
+    // Sets the driver's RichTap vmax to this percentage of the full one
+    void setVmaxPercent(uint32_t percent);
+
+    uint32_t mFullVmaxMv = 0;
+    uint32_t mVmaxMv = 0;
 };
 
 }  // namespace vibrator
