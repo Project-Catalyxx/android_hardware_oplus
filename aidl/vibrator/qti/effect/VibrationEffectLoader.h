@@ -18,8 +18,11 @@ class VibrationEffectLoader {
     effect_stream* getEffectStream(uint32_t effect_id);
 
   private:
-    Json::Value parseEffectJson(std::ifstream& config_stream);
-    void loadEffects(Json::Value&& effect_nodes);
+    using EffectMap = std::unordered_map<uint32_t, effect_stream>;
 
-    std::unordered_map<uint32_t, effect_stream> effect_map_;
+    Json::Value parseEffectJson(std::ifstream& config_stream);
+    void loadEffects(Json::Value&& effect_nodes, EffectMap& effect_map);
+
+    EffectMap effect_map_;
+    EffectMap soft_effect_map_;
 };

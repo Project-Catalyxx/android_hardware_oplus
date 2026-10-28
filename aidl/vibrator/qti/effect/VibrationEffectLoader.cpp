@@ -9,6 +9,7 @@
 #include "VibrationEffectLoader.h"
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 
 #include <fstream>
 
@@ -42,9 +43,18 @@ namespace {
 const auto kConfigPath = "/odm/etc/vibrator/vibrator_effect.json";
 
 const auto kKeyDefStyle = "def_style";
+const auto kKeySoftStyle = "soft_style";
 const auto kKeyEffectFile = "effect_file";
 const auto kKeyEffectId = "effect_id";
 const auto kKeyPlayRateHz = "play_rate_hz";
+
+/*
+ * Haptic profile, set from the device's settings app. "soft" plays an
+ * effect from soft_style when that style has it; anything else, or a
+ * property this process can't read, plays def_style.
+ */
+const auto kHapticProfileProp = "persist.sys.haptic_profile";
+const auto kHapticProfileSoft = "soft";
 
 const int8_t* LoadEffectDataFromFile(const std::string& path, uint32_t& length) {
     std::ifstream file(path, std::ios::binary);
@@ -82,14 +92,25 @@ VibrationEffectLoader::VibrationEffectLoader() {
         LOG(ERROR) << "Failed to parse " << kConfigPath << ", falling back to built-in effects.";
         return;
     }
-    loadEffects(std::move(node));
+    loadEffects(std::move(node[kKeyDefStyle]), effect_map_);
+    loadEffects(std::move(node[kKeySoftStyle]), soft_effect_map_);
 }
 
 VibrationEffectLoader::~VibrationEffectLoader() {
     std::for_each(effect_map_.begin(), effect_map_.end(), [](auto&& v) { delete[] v.second.data; });
+    std::for_each(soft_effect_map_.begin(), soft_effect_map_.end(),
+                  [](auto&& v) { delete[] v.second.data; });
 }
 
 effect_stream* VibrationEffectLoader::getEffectStream(uint32_t effect_id) {
+    if (!soft_effect_map_.empty() &&
+        android::base::GetProperty(kHapticProfileProp, "") == kHapticProfileSoft) {
+        auto entry = soft_effect_map_.find(effect_id);
+        if (entry != soft_effect_map_.end()) {
+            return &entry->second;
+        }
+    }
+
     auto entry = effect_map_.find(effect_id);
     if (entry != effect_map_.end()) {
         return &entry->second;
@@ -113,9 +134,8 @@ Json::Value VibrationEffectLoader::parseEffectJson(std::ifstream& config_stream)
 
     for (auto&& node : root) {
         if (node.isObject()) {
-            // TODO: also load soft_style when dynamic switching is supported
-            node = node[kKeyDefStyle];
-            if (node.isArray() && !node.empty()) {
+            auto&& def_style = node[kKeyDefStyle];
+            if (def_style.isArray() && !def_style.empty()) {
                 return node;
             }
         }
@@ -124,7 +144,7 @@ Json::Value VibrationEffectLoader::parseEffectJson(std::ifstream& config_stream)
     return Json::Value::null;
 }
 
-void VibrationEffectLoader::loadEffects(Json::Value&& effect_nodes) {
+void VibrationEffectLoader::loadEffects(Json::Value&& effect_nodes, EffectMap& effect_map) {
     for (auto&& node : effect_nodes) {
         auto attr = node[kKeyEffectId];
         if (!attr.isUInt()) {
@@ -146,6 +166,6 @@ void VibrationEffectLoader::loadEffects(Json::Value&& effect_nodes) {
             continue;
         }
 
-        effect_map_.emplace(effect_id, effect_stream{effect_id, length, play_rate_hz, data});
+        effect_map.emplace(effect_id, effect_stream{effect_id, length, play_rate_hz, data});
     }
 }
