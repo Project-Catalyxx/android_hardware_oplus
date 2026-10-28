@@ -39,5 +39,6 @@ struct effect_stream {
 };
 
 const struct effect_stream* get_effect_stream(uint32_t effect_id);
+bool effect_lacks_soft_style(uint32_t effect_id);
 
 #endif

@@ -309,6 +309,16 @@ int InputFFDevice::setAmplitude(uint8_t amplitude) {
 }
 
 int InputFFDevice::playEffect(int effectId, EffectStrength es, long* playLengthMs) {
+#ifdef USE_EFFECT_STREAM
+    /* The soft profile plays effects it has no waveform for one step lighter. */
+    if (effect_lacks_soft_style(effectId)) {
+        if (es == EffectStrength::STRONG)
+            es = EffectStrength::MEDIUM;
+        else if (es == EffectStrength::MEDIUM)
+            es = EffectStrength::LIGHT;
+    }
+#endif
+
     switch (es) {
         case EffectStrength::LIGHT:
             mCurrMagnitude = LIGHT_MAGNITUDE;

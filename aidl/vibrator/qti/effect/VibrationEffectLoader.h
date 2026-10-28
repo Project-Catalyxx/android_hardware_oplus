@@ -16,10 +16,12 @@ class VibrationEffectLoader {
     VibrationEffectLoader();
     ~VibrationEffectLoader();
     effect_stream* getEffectStream(uint32_t effect_id);
+    bool lacksSoftStyle(uint32_t effect_id);
 
   private:
     using EffectMap = std::unordered_map<uint32_t, effect_stream>;
 
+    bool softProfileActive();
     Json::Value parseEffectJson(std::ifstream& config_stream);
     void loadEffects(Json::Value&& effect_nodes, EffectMap& effect_map);
 

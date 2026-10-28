@@ -47,3 +47,7 @@ const struct effect_stream* get_effect_stream(uint32_t effect_id) {
                            [&](auto&& v) { return v.effect_id == effect_id; });
     return it != std::end(effects) ? &*it : nullptr;
 }
+
+bool effect_lacks_soft_style(uint32_t effect_id) {
+    return loader.lacksSoftStyle(effect_id);
+}

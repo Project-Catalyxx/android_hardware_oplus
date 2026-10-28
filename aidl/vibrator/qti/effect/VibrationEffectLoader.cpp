@@ -102,9 +102,21 @@ VibrationEffectLoader::~VibrationEffectLoader() {
                   [](auto&& v) { delete[] v.second.data; });
 }
 
+bool VibrationEffectLoader::softProfileActive() {
+    return !soft_effect_map_.empty() &&
+           android::base::GetProperty(kHapticProfileProp, "") == kHapticProfileSoft;
+}
+
+/*
+ * True when the soft profile is on but soft_style has no version of this
+ * effect, so it would otherwise play from def_style at full strength.
+ */
+bool VibrationEffectLoader::lacksSoftStyle(uint32_t effect_id) {
+    return softProfileActive() && soft_effect_map_.find(effect_id) == soft_effect_map_.end();
+}
+
 effect_stream* VibrationEffectLoader::getEffectStream(uint32_t effect_id) {
-    if (!soft_effect_map_.empty() &&
-        android::base::GetProperty(kHapticProfileProp, "") == kHapticProfileSoft) {
+    if (softProfileActive()) {
         auto entry = soft_effect_map_.find(effect_id);
         if (entry != soft_effect_map_.end()) {
             return &entry->second;
