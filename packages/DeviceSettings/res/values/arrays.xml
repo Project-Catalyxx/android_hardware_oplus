@@ -227,19 +227,14 @@
     </string-array>
 
     <!-- Haptic Profiles -->
+    <!-- The effect styles in the device's vibrator_effect.json -->
     <string-array name="haptic_profile_entries">
-        <item>@string/haptic_profile_op13gentle</item>
-        <item>@string/haptic_profile_op13crisp</item>
-        <item>@string/haptic_profile_yaap_gentle</item>
-        <item>@string/haptic_profile_yaap_crisp</item>
-        <item>@string/haptic_profile_richtap</item>
+        <item>@string/haptic_profile_def</item>
+        <item>@string/haptic_profile_soft</item>
     </string-array>
 
     <string-array name="haptic_profile_values" translatable="false">
-        <item>op13gentle</item>
-        <item>op13crisp</item>
-        <item>gentle</item>
-        <item>crisp</item>
-        <item>richtap</item>
+        <item>def</item>
+        <item>soft</item>
     </string-array>
 </resources>

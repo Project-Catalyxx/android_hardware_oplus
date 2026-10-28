@@ -61,6 +61,10 @@
         <item>63</item>
     </string-array>
 
+    <!-- Whether the vibrator HAL plays the soft effect style when
+         persist.sys.haptic_profile is "soft" -->
+    <bool name="config_hapticProfilesSupported">false</bool>
+
     <!-- The default actions of slider when used to launch apps -->
     <string-array name="config_defaultSliderActionsForApplaunch" translatable="false">
         <item>70</item>

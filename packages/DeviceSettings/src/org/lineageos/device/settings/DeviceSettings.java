@@ -122,8 +122,17 @@ public class DeviceSettings extends SettingsBasePreferenceFragment
         initNotificationSliderPreference();
 
         mHapticProfilePref = (ListPreference) findPreference(Constants.KEY_HAPTIC_PROFILE);
-        if (mHapticProfilePref != null) {
+        if (mHapticProfilePref != null
+                && !getResources().getBoolean(R.bool.config_hapticProfilesSupported)) {
+            // The vibrator HAL ignores the profile here: drop it and its category
+            removePref(mHapticProfilePref);
+            mHapticProfilePref = null;
+        } else if (mHapticProfilePref != null) {
             String currentProfile = SystemProperties.get(Constants.PROP_HAPTIC_PROFILE, Constants.HAPTIC_PROFILE_DEFAULT);
+            if (mHapticProfilePref.findIndexOfValue(currentProfile) < 0) {
+                // A profile the HAL doesn't know plays the default style
+                currentProfile = Constants.HAPTIC_PROFILE_DEFAULT;
+            }
             mHapticProfilePref.setValue(currentProfile);
             mHapticProfilePref.setSummary(mHapticProfilePref.getEntry());
             mHapticProfilePref.setOnPreferenceChangeListener(this);
