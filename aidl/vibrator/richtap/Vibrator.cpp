@@ -25,12 +25,14 @@
  * The AAC library plays each prebaked effect's one waveform whatever strength it is
  * given, and sets the driver's gain to full just before. The driver drives the motor
  * at richtap_fifo_vmax times that gain, so scale richtap_fifo_vmax with the strength
- * instead, in the proportions of the QTI HAL's LIGHT, MEDIUM and STRONG magnitudes.
+ * instead: LIGHT at half, as the QTI HAL's magnitudes have it, and MEDIUM, the default
+ * for ring, notification, alarm and media, close to STRONG, since salami's short clicks
+ * felt weak at 75%.
  */
 #define RICHTAP_FIFO_VMAX_PATH "/sys/class/qcom-haptics/richtap_fifo_vmax"
 #define FIFO_VMAX_PATH "/sys/class/qcom-haptics/fifo_vmax"
 #define RICHTAP_LIGHT_VMAX_PERCENT 50
-#define RICHTAP_MEDIUM_VMAX_PERCENT 75
+#define RICHTAP_MEDIUM_VMAX_PERCENT 90
 #define RICHTAP_FULL_VMAX_PERCENT 100
 
 namespace aidl {
